@@ -1,0 +1,67 @@
+# ==========================================
+# AMBIENTE VIRTUAL E DEPENDÊNCIAS (Universal)
+# ==========================================
+.venv/
+venv/
+ENV/
+env/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# ==========================================
+# ARQUIVOS TEMPORÁRIOS DO PYTHON (Universal)
+# ==========================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+
+# ==========================================
+# COMPILAÇÃO E EXECUTÁVEIS (PyInstaller/Setuptools)
+# ==========================================
+build/
+dist/
+*.spec
+
+# ==========================================
+# CONFIGURAÇÕES DE EDITORES (VS Code / PyCharm)
+# ==========================================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+
+# ==========================================
+# SISTEMA OPERACIONAL (Windows / Mac)
+# ==========================================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# ==========================================
+# SEGURANÇA: DADOS E CHAVES (Crucial para o GitHub)
+# ==========================================
+*.csv
+*.xlsx
+*.parquet
+*.json
+*.env
+*.db
+*.sqlite3
