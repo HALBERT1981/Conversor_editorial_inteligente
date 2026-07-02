@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 parser.py
 Lê o .docx e extrai uma estrutura intermediária (ParsedDocument) pronta para
@@ -58,6 +58,7 @@ class ParsedDocument:
     images: List[ImageAsset]
     cover_candidate: Optional[ImageAsset]
     heading1_found: bool
+    style_warnings: List[str] = field(default_factory=list)
 
 
 def _style_name(paragraph) -> str:
@@ -117,6 +118,25 @@ def _runs_from_paragraph(paragraph) -> List[Run]:
     return runs
 
 
+def _looks_like_heading(paragraph) -> bool:
+    text = (paragraph.text or "").strip()
+    if not text:
+        return False
+    if len(text) > 80:
+        return False
+    if len(text.split()) > 10:
+        return False
+    if any(p in text for p in [".", "?", "!"]):
+        return False
+    if any(r.bold for r in paragraph.runs):
+        return True
+    return False
+
+
+def _is_heading_style(style_name: str) -> bool:
+    return style_name in HEADING1_NAMES or style_name in HEADING2_NAMES or style_name in HEADING3_NAMES
+
+
 def parse_docx(path: str) -> ParsedDocument:
     doc = Document(path)
     core = doc.core_properties
@@ -130,6 +150,10 @@ def parse_docx(path: str) -> ParsedDocument:
     chapters: List[Chapter] = []
     current: Optional[Chapter] = None
     heading1_found = False
+    heading2_found = False
+    heading3_found = False
+    style_warnings: List[str] = []
+    possible_heading_candidates: List[str] = []
 
     for paragraph in doc.paragraphs:
         style = _style_name(paragraph)
@@ -147,7 +171,6 @@ def parse_docx(path: str) -> ParsedDocument:
             continue
 
         if current is None:
-            # Nenhum Heading 1 visto ainda: cria um capítulo "guarda-chuva"
             current = Chapter(title=doc_title or "Capítulo 1")
             chapters.append(current)
 
@@ -158,11 +181,16 @@ def parse_docx(path: str) -> ParsedDocument:
                 continue
 
         if style in HEADING2_NAMES:
+            heading2_found = True
             current.blocks.append(Block(kind="heading2", runs=_runs_from_paragraph(paragraph)))
             continue
         if style in HEADING3_NAMES:
+            heading3_found = True
             current.blocks.append(Block(kind="heading3", runs=_runs_from_paragraph(paragraph)))
             continue
+
+        if _looks_like_heading(paragraph) and not _is_heading_style(style):
+            possible_heading_candidates.append(text)
 
         lt = _list_type(paragraph)
         if lt:
@@ -171,6 +199,28 @@ def parse_docx(path: str) -> ParsedDocument:
 
         if text:
             current.blocks.append(Block(kind="paragraph", runs=_runs_from_paragraph(paragraph)))
+
+    if not heading1_found and heading2_found:
+        style_warnings.append(
+            "O documento contém Heading 2/3, mas não foi detectado Heading 1. Isso pode indicar hierarquia de títulos incorreta."
+        )
+
+    if possible_heading_candidates:
+        candidates_text = "; ".join(possible_heading_candidates[:3])
+        style_warnings.append(
+            "Foram detectados possíveis títulos sem estilo Heading aplicado: "
+            f"{candidates_text}{'...' if len(possible_heading_candidates) > 3 else ''}"
+        )
+
+    if not heading1_found and not heading2_found and possible_heading_candidates:
+        style_warnings.append(
+            "Verifique se os títulos do documento usam estilos Heading 1/2/3 no Word."
+        )
+
+    if not heading1_found and not heading2_found and not possible_heading_candidates:
+        style_warnings.append(
+            "Nenhum título claro foi encontrado. Verifique se o documento possui estilos Heading aplicados."
+        )
 
     cover_candidate = images_in_order[0] if images_in_order else None
 
@@ -181,4 +231,5 @@ def parse_docx(path: str) -> ParsedDocument:
         images=images_in_order,
         cover_candidate=cover_candidate,
         heading1_found=heading1_found,
+        style_warnings=style_warnings,
     )

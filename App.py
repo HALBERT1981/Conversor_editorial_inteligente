@@ -75,6 +75,11 @@ if parsed:
             "capítulos, aplique o estilo 'Título 1' aos títulos no Word."
         )
 
+    if parsed.style_warnings:
+        with st.expander("Avisos de estilo do documento"):
+            for warning in parsed.style_warnings:
+                st.warning(warning)
+
     with st.expander("Ver capítulos detectados"):
         for i, ch in enumerate(parsed.chapters, start=1):
             st.write(f"**{i}. {ch.title}**  —  {len(ch.blocks)} blocos de conteúdo")
