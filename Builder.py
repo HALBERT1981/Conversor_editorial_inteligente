@@ -116,6 +116,9 @@ def build_epub(
 
     if cover_bytes:
         book.set_cover("cover.jpg", cover_bytes)
+        cover_xhtml = book.get_item_with_id("cover")
+        if cover_xhtml:
+            cover_xhtml.linear = True
         spine.append("cover")
 
     image_href_map: Dict[str, str] = {}

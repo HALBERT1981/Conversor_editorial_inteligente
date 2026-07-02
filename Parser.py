@@ -15,9 +15,9 @@ from typing import List, Optional, Dict
 from docx import Document
 from docx.oxml.ns import qn
 
-HEADING1_NAMES = {"heading 1", "título 1", "titulo 1", "heading1"}
-HEADING2_NAMES = {"heading 2", "título 2", "titulo 2", "heading2"}
-HEADING3_NAMES = {"heading 3", "título 3", "titulo 3", "heading3"}
+HEADING1_WORDS = ["heading 1", "título 1", "titulo 1", "heading1"]
+HEADING2_WORDS = ["heading 2", "título 2", "titulo 2", "heading2"]
+HEADING3_WORDS = ["heading 3", "título 3", "titulo 3", "heading3"]
 
 
 @dataclass
@@ -134,7 +134,11 @@ def _looks_like_heading(paragraph) -> bool:
 
 
 def _is_heading_style(style_name: str) -> bool:
-    return style_name in HEADING1_NAMES or style_name in HEADING2_NAMES or style_name in HEADING3_NAMES
+    return (
+        any(w in style_name for w in HEADING1_WORDS)
+        or any(w in style_name for w in HEADING2_WORDS)
+        or any(w in style_name for w in HEADING3_WORDS)
+    )
 
 
 def parse_docx(path: str) -> ParsedDocument:
@@ -164,7 +168,7 @@ def parse_docx(path: str) -> ParsedDocument:
             if img not in images_in_order:
                 images_in_order.append(img)
 
-        if style in HEADING1_NAMES:
+        if any(w in style for w in HEADING1_WORDS):
             heading1_found = True
             current = Chapter(title=text or f"Capítulo {len(chapters) + 1}")
             chapters.append(current)
@@ -180,11 +184,11 @@ def parse_docx(path: str) -> ParsedDocument:
             if not text:
                 continue
 
-        if style in HEADING2_NAMES:
+        if any(w in style for w in HEADING2_WORDS):
             heading2_found = True
             current.blocks.append(Block(kind="heading2", runs=_runs_from_paragraph(paragraph)))
             continue
-        if style in HEADING3_NAMES:
+        if any(w in style for w in HEADING3_WORDS):
             heading3_found = True
             current.blocks.append(Block(kind="heading3", runs=_runs_from_paragraph(paragraph)))
             continue
